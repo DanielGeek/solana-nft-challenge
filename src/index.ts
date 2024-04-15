@@ -1,5 +1,5 @@
 import { initializeKeypair } from "./initializeKeypair"
-import { Connection, clusterApiUrl, PublicKey } from "@solana/web3.js"
+import { Connection, clusterApiUrl, PublicKey, Signer } from "@solana/web3.js"
 import {
     Metaplex,
     keypairIdentity,
@@ -15,6 +15,16 @@ interface NftData {
     description: string
     sellerFeeBasisPoints: number
     imageFile: string
+}
+
+interface CollectionNftData {
+    name: string
+    symbol: string
+    description: string
+    sellerFeeBasisPoints: number
+    imageFile: string
+    isCollection: boolean
+    collectionAuthority: Signer
 }
 
 // example data for a new NFT
@@ -35,14 +45,52 @@ const updateNftData = {
     imageFile: "success.png",
 }
 
+// helper function to upload image and metadata
+async function uploadMetadata(
+    metaplex: Metaplex,
+    nftData: NftData,
+): Promise<string> {
+    // file to buffer
+    const buffer = fs.readFileSync("src/" + nftData.imageFile);
+
+    // buffer to metaplex file
+    const file = toMetaplexFile(buffer, nftData.imageFile);
+
+    // upload image and get image uri
+    const imageUri = await metaplex.storage().upload(file);
+    console.log("image uri:", imageUri);
+
+    // upload metadata and get metadata uri (off chain metadata)
+    const { uri } = await metaplex.nfts().uploadMetadata({
+        name: nftData.name,
+        symbol: nftData.symbol,
+        description: nftData.description,
+        image: imageUri,
+    });
+
+    console.log("metadata uri:", uri);
+    return uri;
+}
+
 async function main() {
     // create a new connection to the cluster's API
-    const connection = new Connection(clusterApiUrl("devnet"))
+    const connection = new Connection(clusterApiUrl("devnet"));
 
     // initialize a keypair for the user
-    const user = await initializeKeypair(connection)
+    const user = await initializeKeypair(connection);
 
-    console.log("PublicKey:", user.publicKey.toBase58())
+    console.log("PublicKey:", user.publicKey.toBase58());
+
+    // metaplex set up
+    const metaplex = Metaplex.make(connection)
+        .use(keypairIdentity(user))
+        .use(
+            bundlrStorage({
+                address: "https://devnet.bundlr.network",
+                providerUrl: "https://api.devnet.solana.com",
+                timeout: 60000,
+            }),
+        );
 }
 
 main()
