@@ -114,6 +114,13 @@ async function main() {
                 timeout: 60000,
             }),
         );
+
+    // upload the NFT data and get the URI for the metadata
+    const uri = await uploadMetadata(metaplex, nftData)
+
+    // create an NFT using the helper function and the URI from the metadata
+    const nft = await createNft(metaplex, uri, nftData)
+
 }
 
 main()
