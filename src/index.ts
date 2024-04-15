@@ -72,6 +72,29 @@ async function uploadMetadata(
     return uri;
 }
 
+// helper function create NFT
+async function createNft(
+    metaplex: Metaplex,
+    uri: string,
+    nftData: NftData,
+): Promise<NftWithToken> {
+    const { nft } = await metaplex.nfts().create(
+        {
+            uri: uri, // metadata URI
+            name: nftData.name,
+            sellerFeeBasisPoints: nftData.sellerFeeBasisPoints,
+            symbol: nftData.symbol,
+        },
+        { commitment: "finalized" },
+    );
+
+    console.log(
+        `Token Mint: https://explorer.solana.com/address/${nft.address.toString()}?cluster=devnet`,
+    );
+
+    return nft;
+}
+
 async function main() {
     // create a new connection to the cluster's API
     const connection = new Connection(clusterApiUrl("devnet"));
