@@ -95,6 +95,33 @@ async function createNft(
     return nft;
 }
 
+// helper function update NFT
+async function updateNftUri(
+    metaplex: Metaplex,
+    uri: string,
+    mintAddress: PublicKey,
+) {
+    // fetch NFT data using mint address
+    const nft = await metaplex.nfts().findByMint({ mintAddress });
+
+    // update the NFT metadata
+    const { response } = await metaplex.nfts().update(
+        {
+            nftOrSft: nft,
+            uri: uri,
+        },
+        { commitment: "finalized" },
+    );
+
+    console.log(
+        `Token Mint: https://explorer.solana.com/address/${nft.address.toString()}?cluster=devnet`,
+    );
+
+    console.log(
+        `Transaction: https://explorer.solana.com/tx/${response.signature}?cluster=devnet`,
+    );
+}
+
 async function main() {
     // create a new connection to the cluster's API
     const connection = new Connection(clusterApiUrl("devnet"));
