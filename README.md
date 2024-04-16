@@ -1,5 +1,10 @@
 # Solana NFT Collection example
 
+
+# Run project
+`npm i`
+`npm star`
+
 This is a Solana NFT Collection example using Metaplex
 
 # Collection example
