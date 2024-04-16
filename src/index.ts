@@ -17,6 +17,14 @@ interface NftData {
     imageFile: string
 }
 
+interface UpdateNftData {
+    name: string;
+    symbol: string;
+    description: string;
+    uri: string;
+    mintAddress: PublicKey;
+}
+
 interface CollectionNftData {
     name: string
     symbol: string
@@ -98,17 +106,18 @@ async function createNft(
 // helper function update NFT
 async function updateNftUri(
     metaplex: Metaplex,
-    uri: string,
-    mintAddress: PublicKey,
+    updateData: UpdateNftData,
 ) {
     // fetch NFT data using mint address
-    const nft = await metaplex.nfts().findByMint({ mintAddress });
+    const nft = await metaplex.nfts().findByMint({ mintAddress: updateData.mintAddress });
 
     // update the NFT metadata
     const { response } = await metaplex.nfts().update(
         {
             nftOrSft: nft,
-            uri: uri,
+            uri: updateData.uri,
+            name: updateData.name,
+            symbol: updateData.symbol
         },
         { commitment: "finalized" },
     );
@@ -146,7 +155,23 @@ async function main() {
     const uri = await uploadMetadata(metaplex, nftData)
 
     // create an NFT using the helper function and the URI from the metadata
-    const nft = await createNft(metaplex, uri, nftData)
+    const nft = await createNft(
+        metaplex,
+        uri,
+        nftData,
+    )
+
+    // upload updated NFT data and get the new URI for the metadata
+    const updatedUri = await uploadMetadata(metaplex, updateNftData)
+
+    const nftDataToUpdate = {
+        ...updateNftData,
+        uri: updatedUri,
+        mintAddress: nft.address
+
+    }
+    // update the NFT using the helper function and the new URI from the metadata
+    await updateNftUri(metaplex, nftDataToUpdate);
 
 }
 
