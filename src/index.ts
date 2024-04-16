@@ -85,6 +85,7 @@ async function createNft(
     metaplex: Metaplex,
     uri: string,
     nftData: NftData,
+    collectionMint: PublicKey
 ): Promise<NftWithToken> {
     const { nft } = await metaplex.nfts().create(
         {
@@ -92,15 +93,46 @@ async function createNft(
             name: nftData.name,
             sellerFeeBasisPoints: nftData.sellerFeeBasisPoints,
             symbol: nftData.symbol,
+            collection: collectionMint,
         },
-        { commitment: "finalized" },
-    );
+        { commitment: "finalized" }
+    )
 
     console.log(
-        `Token Mint: https://explorer.solana.com/address/${nft.address.toString()}?cluster=devnet`,
-    );
+        `Token Mint: https://explorer.solana.com/address/${nft.address.toString()}?cluster=devnet`
+    )
 
-    return nft;
+    await metaplex.nfts().verifyCollection({
+        //this is what verifies our collection as a Certified Collection
+        mintAddress: nft.mint.address,
+        collectionMintAddress: collectionMint,
+        isSizedCollection: true,
+    })
+
+    return nft
+}
+
+async function createCollectionNft(
+    metaplex: Metaplex,
+    uri: string,
+    data: CollectionNftData
+): Promise<NftWithToken> {
+    const { nft } = await metaplex.nfts().create(
+        {
+            uri: uri,
+            name: data.name,
+            sellerFeeBasisPoints: data.sellerFeeBasisPoints,
+            symbol: data.symbol,
+            isCollection: true,
+        },
+        { commitment: "finalized" }
+    )
+
+    console.log(
+        `Collection Mint: https://explorer.solana.com/address/${nft.address.toString()}?cluster=devnet`
+    )
+
+    return nft
 }
 
 // helper function update NFT
@@ -151,6 +183,26 @@ async function main() {
             }),
         );
 
+    const collectionNftData = {
+        name: "TestCollectionNFT",
+        symbol: "TEST",
+        description: "Test Description Collection",
+        sellerFeeBasisPoints: 100,
+        imageFile: "success.png",
+        isCollection: true,
+        collectionAuthority: user,
+    }
+
+    // upload data for the collection NFT and get the URI for the metadata
+    const collectionUri = await uploadMetadata(metaplex, collectionNftData);
+
+    // create a collection NFT using the helper function and the URI from the metadata
+    const collectionNft = await createCollectionNft(
+        metaplex,
+        collectionUri,
+        collectionNftData
+    );
+
     // upload the NFT data and get the URI for the metadata
     const uri = await uploadMetadata(metaplex, nftData)
 
@@ -159,6 +211,7 @@ async function main() {
         metaplex,
         uri,
         nftData,
+        collectionNft.mint.address
     )
 
     // upload updated NFT data and get the new URI for the metadata
