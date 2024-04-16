@@ -2,6 +2,9 @@
 
 This is a Solana NFT Collection example using Metaplex
 
+# Collection example
+Collection Mint: https://lnkd.in/eACw9Ntu
+
 # Minted NFT example
 PublicKey: DByVXNUbK1g4jSC8MqA1ptmKsjHmXvxVjf889ZLeVP5K
 image uri: https://arweave.net/Rieo56AV_go0I9hpb_hZH2GAAbOCbKIdO2tE6KKCuLk
